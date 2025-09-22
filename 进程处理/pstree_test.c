@@ -1,4 +1,3 @@
-//execve一般是与fork搭配使用，使用fork创建出一个子进程，然后用子进程跳转
 #include<stdio.h>
 #include<stdlib.h>
 #include<unistd.h>
@@ -10,7 +9,7 @@ int main(int argc, char const *argv[])
     printf("老同学%s,编号%d,一开始在一楼学习\n",name,getpid());
 
     //跳转
-    __pid_t pid = fork();
+    int pid = fork();
     
     if(pid == -1)
     {
@@ -33,8 +32,9 @@ int main(int argc, char const *argv[])
     else
     {
         //父进程
-        // sleep(1);
-        printf("老同学%d邀请完%d后继续在一楼深造\n",getpid(),pid);     
+        printf("老同学%d邀请完%d后继续在一楼深造\n",getpid(),pid); 
+        //永久挂起，"ps -ef"查看进程，可以看到子进程的pid以及ppid，顺着ppid一直找下去就会找到pid为1的进程，就是/sbin/init splash
+        char ch = fgetc(stdin);    
     }
 
     return 0;

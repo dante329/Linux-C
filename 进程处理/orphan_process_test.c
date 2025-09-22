@@ -10,7 +10,7 @@ int main(int argc, char const *argv[])
     printf("老同学%s,编号%d,一开始在一楼学习\n",name,getpid());
 
     //跳转
-    __pid_t pid = fork();
+    int pid = fork();
     
     if(pid == -1)
     {
@@ -21,7 +21,7 @@ int main(int argc, char const *argv[])
     {
         //子进程
         char* new_name = "morbee";
-        char* args[] = {"./erlou",new_name,NULL};
+        char* args[] = {"./erlou_block",new_name,NULL};
         int execveR = execve(args[0],args,NULL);
 
         if(execveR == -1)
@@ -32,9 +32,8 @@ int main(int argc, char const *argv[])
     }
     else
     {
-        //父进程
-        // sleep(1);
-        printf("老同学%d邀请完%d后继续在一楼深造\n",getpid(),pid);     
+        //父进程提前结束，子进程就会变成孤儿进程
+        printf("老同学%d邀请完%d后继续在一楼深造\n",getpid(),pid);
     }
 
     return 0;

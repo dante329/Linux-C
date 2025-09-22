@@ -1,4 +1,3 @@
-//fork后，父子进程共享文件描述符
 #include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h> 

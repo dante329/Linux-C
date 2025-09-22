@@ -28,3 +28,21 @@ fork_execve_test:fork_execve_test.c
 	-$(CC) -o $@ $^
 	-./$@
 	-rm ./$@
+
+waitpid_test:waitpid_test.c 
+	-$(CC) -o $@ $^
+	-./$@
+	-rm ./$@
+
+pstree_test:pstree_test.c 
+	-$(CC) -o $@ $^
+	-./$@
+	-rm ./$@
+
+erlou_block:erlou_block.c 
+	-$(CC) -o $@ $^
+
+orphan_process_test:orphan_process_test.c 
+	-$(CC) -o $@ $^
+	-./$@
+	-rm ./$@
