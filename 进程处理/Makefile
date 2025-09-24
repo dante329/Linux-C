@@ -46,3 +46,46 @@ orphan_process_test:orphan_process_test.c
 	-$(CC) -o $@ $^
 	-./$@
 	-rm ./$@
+
+errno_test:errno_test.c 
+	-$(CC) -o $@ $^
+	-./$@
+	-rm ./$@
+
+unnamed_pipe_test:unnamed_pipe_test.c 
+	-$(CC) -o $@ $^
+#在"-./$@"后输入要传入的参数
+	-./$@ "daven" 
+	-rm ./$@
+
+fifo_write:fifo_write.c 
+	-$(CC) -o $@ $^
+
+fifo_read:fifo_read.c 
+	-$(CC) -o $@ $^
+
+named_pipe:fifo_write fifo_read
+
+named_pipe_clean:
+	-rm ./fifo_write 
+	-rm ./fifo_read
+
+shared_memory:shared_memory.c 
+	-$(CC) -o $@ $^
+	-./$@
+	-rm ./$@
+
+father_son_mq_test:father_son_mq_test.c 
+	-$(CC) -o $@ $^
+	-./$@
+	
+
+producer:producer.c 
+	-$(CC) -o $@ $^
+
+consumer:consumer.c 
+	-$(CC) -o $@ $^
+
+producer_consumer_clean:
+	-rm ./producer
+	-rm ./consumer
