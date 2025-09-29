@@ -89,3 +89,8 @@ consumer:consumer.c
 producer_consumer_clean:
 	-rm ./producer
 	-rm ./consumer
+
+signal_test:signal_test.c 
+	-$(CC) -o $@ $^
+	-./$@
+	-rm ./$@
