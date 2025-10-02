@@ -28,7 +28,7 @@ int main(int argc, char const *argv[])
     //等待两个线程结束
     pthread_join(pid1,NULL);
     pthread_join(pid2,NULL);
-
+ 
     printf("sum:%d\n",num);
     return 0;
 }
