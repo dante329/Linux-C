@@ -1,4 +1,4 @@
-//建立单个TCP连接 server端
+//TCP多连接的client端（多进程实现）
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -16,26 +16,26 @@
         return -1;                \
     }
 
-void* write_to_client(void *arg)
+void* write_to_server(void *arg)
 {
-    //将stdin中的数据send给client
+    //将stdin中的数据send给server
     char *write_buf = malloc(1024);
-    int clientfd = *(int*)arg;
+    int sockfd = *(int*)arg;
     size_t count; //记录读了多少个字符
     int send_num;
 
     if(write_buf == NULL)
     {
         printf("写缓存分配失败，断开连接\n");
-        shutdown(clientfd, SHUT_WR);
+        shutdown(sockfd, SHUT_WR);
         perror("malloc server write_buf");
         return NULL;
     }
     
-    while(fgets(write_buf,1023,stdin) != NULL)
+    while(fgets(write_buf,1024,stdin) != NULL)
     {
-        count = strlen(write_buf); //fgets() 自动在末尾补 \0 → strlen() 是安全的
-        send_num = send(clientfd,write_buf,count,0);
+        count = strlen(write_buf);
+        send_num = send(sockfd,write_buf,count,0);
         if(send_num == -1)
         {
             perror("send");
@@ -43,39 +43,37 @@ void* write_to_client(void *arg)
     }
 
     printf("接收到命令行的终止信号，不再写入，关闭连接......\n");
-    shutdown(clientfd, SHUT_WR);
+    shutdown(sockfd, SHUT_WR);
     free(write_buf);
 
     return NULL;
 }
 
-void* read_from_client(void *arg)
+void* read_from_server(void *arg)
 {
     //将recv到的数据输出到stdout
     char *read_buf = malloc(1024);
-    int clientfd = *(int*)arg;
+    int sockfd = *(int*)arg;
     size_t count = 0;
 
     if(read_buf == NULL)
     {
         printf("读缓存分配失败，断开连接\n");
-        shutdown(clientfd, SHUT_WR);
+        shutdown(sockfd, SHUT_WR);
         perror("malloc server write_buf");
         return NULL;
     }
     
-    while((count = recv(clientfd,read_buf,1023,0)))
+    while((count = recv(sockfd,read_buf,1023,0)))
     {
+        read_buf[count] = '\0'; //server端send过来的数据没有\0，在这要手动加上
         if(count == -1)
         {
             perror("recv");
         }
         fputs(read_buf,stdout);
-
-        read_buf[count] = '\0';
     }
 
-    printf("客户端请求关闭连接......\n");
     free(read_buf);
 
     return NULL;
@@ -84,51 +82,42 @@ void* read_from_client(void *arg)
 int main(int argc, char const *argv[])
 {
     struct sockaddr_in server_addr,client_addr;
-
+    
     memset(&server_addr,0,sizeof(server_addr));
     memset(&client_addr,0,sizeof(client_addr));
 
     //填写server_addr
     server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    // inet_pton(AF_INET,"192.168.6.101", &server_addr.sin_addr);
+    server_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK); //连接本机 127.0.0.1
     server_addr.sin_port = htons(6666);
     
     //网络编程流程
-    //1.调用socket
+    //1.创建socket
     int sockfd = socket(AF_INET,SOCK_STREAM,0);
     handle_error("socket",sockfd);
     
+    int tmp_result;
     //2.bind绑定地址
-    int tmp_result = bind(sockfd,(struct sockaddr *)&server_addr,sizeof(server_addr));
-    handle_error("bind",tmp_result);
-
-    //3.进入监听状态
-    tmp_result = listen(sockfd,128);
-    handle_error("listen",tmp_result);
-
-    //4.获取客户端的连接
-    socklen_t cliaddr_len = sizeof(client_addr);
+    //不绑定,自动分配端口
     
-    /**
-     * clientfd是能与客户端收发消息的文件描述符
-     * 调用accept后如果没有客户端连接，会挂起等待
-     */
-    int  clientfd = accept(sockfd,(struct sockaddr *)&client_addr,&cliaddr_len);
-    handle_error("accept", clientfd);
+    //3.连接服务端
+    tmp_result = connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
+    handle_error("connect", tmp_result);
 
-    printf("与客户端 from %s at PORT %d 文件描述符 %d 建立连接\n",inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port),  clientfd);
+    printf("连接上服务器%s 端口号：%d\n",inet_ntoa(server_addr.sin_addr),ntohs(server_addr.sin_port));
 
     pthread_t pid_write, pid_read;
-
-    pthread_create(&pid_write,NULL,write_to_client,(void*)&clientfd);
-    pthread_create(&pid_read,NULL,read_from_client,(void*)&clientfd);
+    
+    // 启动一个子线程，用来从命令行读取数据并发送到服务端
+    pthread_create(&pid_write,NULL,write_to_server,(void*)&sockfd);
+    // 启动一个子线程，用来读取服务端数据，并打印到 stdout
+    pthread_create(&pid_read,NULL,read_from_server,(void*)&sockfd);
 
     pthread_join(pid_write,NULL);
     pthread_join(pid_read,NULL);
 
-    printf("关闭资源\n");
-    close(clientfd);
+    printf("已释放资源\n");
+
     close(sockfd);
 
     return 0;

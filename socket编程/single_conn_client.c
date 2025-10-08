@@ -64,12 +64,13 @@ void* read_from_server(void *arg)
         return NULL;
     }
     
-    while((count = recv(sockfd,read_buf,1024,0)))
+    while((count = recv(sockfd,read_buf,1023,0)))
     {
         if(count == -1)
         {
             perror("recv");
         }
+        read_buf[count] = '\0';
         fputs(read_buf,stdout);
     }
 
@@ -82,7 +83,7 @@ void* read_from_server(void *arg)
 int main(int argc, char const *argv[])
 {
     struct sockaddr_in server_addr,client_addr;
-
+    
     memset(&server_addr,0,sizeof(server_addr));
     memset(&client_addr,0,sizeof(client_addr));
 
@@ -102,8 +103,9 @@ int main(int argc, char const *argv[])
     int sockfd = socket(AF_INET,SOCK_STREAM,0);
     handle_error("socket",sockfd);
     
-    //2.bind绑定地址
-    int tmp_result = bind(sockfd,(struct sockaddr *)&client_addr,sizeof(client_addr));
+    int tmp_result;
+    //2.bind绑定地址（可以不绑定，就自动分配端口）
+    tmp_result = bind(sockfd,(struct sockaddr *)&client_addr,sizeof(client_addr));
     handle_error("bind",tmp_result);
 
     //3.连接服务端
