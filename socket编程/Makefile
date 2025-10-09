@@ -41,3 +41,15 @@ multi_conn_processes_server: multi_conn_processes_server.c
 
 multi_conn_processes_client: multi_conn_processes_client.c
 	-$(CC) -o $@ $^
+
+udp_server: udp_server.c
+	-$(CC) -o $@ $^
+
+udp_client: udp_client.c
+	-$(CC) -o $@ $^
+
+socket_ipc_test: socket_ipc_test.c
+	-$(CC) -o $@ $^
+
+socket_ipc_test_ai: socket_ipc_test_ai.c
+	-$(CC) -o $@ $^
